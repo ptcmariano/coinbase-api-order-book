@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coinbase order book</title>
+</head>
+<body>
+    <h3>Order book - coinbase</h3>
+    <input type="text" name="requestPath" id="requestPath"
+        style="min-width: 50%;"
+        value="https://api-public.sandbox.pro.coinbase.com/products/BTC-USD/book?level=3&status=open">
+    <button onclick="coinbaseDataBook.request()">GET DATA</button>
+    <section>
+        <h2>ask</h2>
+        <table id="asklist">
+        </table>
+    </section>
+    <section>
+        <h2>bid</h2>
+        <table id="bidlist">
+        </table>
+    </section>
+</body>
+<script>
+    let coinbaseDataBook = {
+        addask: (ask) => {
+            const row = document.createElement("tr");
+            let tdPrice = document.createElement('td');
+            tdPrice.innerHTML = ask[0];
+            let tdQtd = document.createElement('td');
+            tdQtd.innerHTML = ask[1];
+            row.appendChild(tdPrice);
+            row.appendChild(tdQtd);
+            document.getElementById('asklist')
+                .appendChild(row);
+        },
+        addbid: (bid) => {
+            const row = document.createElement("tr");
+            let tdPrice = document.createElement('td');
+            tdPrice.innerHTML = bid[0];
+            let tdQtd = document.createElement('td');
+            tdQtd.innerHTML = bid[1];
+            row.appendChild(tdPrice);
+            row.appendChild(tdQtd);
+            document.getElementById('bidlist')
+                .appendChild(row);
+        },
+        recieveContentJson: (contentType) => {
+            return contentType && contentType.indexOf("application/json") !== -1;
+        },
+        request: () => {
+            // behavior get data
+            var requestPath = document.getElementById('requestPath').value;
+            // fetch('https://api.pro.coinbase.com'+requestPath,{})
+            fetch(requestPath, {})
+            .then((response) => {
+                let isValidJson = 
+                    coinbaseDataBook.recieveContentJson(response.headers.get("content-type"));
+                    console.log(response.status)
+                if(isValidJson && response.status == 200) {
+                    return response.json().then(function(json) {
+                        for (let index = 0; index < 50; index++) {
+                            const ask = json.asks[index];
+                            coinbaseDataBook.addask(ask);
+                            const bid = json.bids[index];
+                            coinbaseDataBook.addbid(bid);
+                        }
+                    });
+                } else {
+                    console.error("Oops, we haven't got JSON!", response);
+                }
+            })
+            .catch('error', err => {
+                console.log('error',err.toJSON());
+            });
+        }
+    };
+</script>
+</html>
